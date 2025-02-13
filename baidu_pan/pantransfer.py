@@ -222,7 +222,8 @@ class PanTransfer:
         link_info = self.get_share_link_info(link_url, pass_code)
         shareid = link_info['shareid']
         user_id = link_info['share_uk']
-        file_list = [{'fs_id': i['fs_id'], 'filename': i['server_filename'], 'isdir': i['isdir']} for i in link_info['file_list']]
+        file_list = [{'fs_id': i['fs_id'], 'filename': i['server_filename'], 'isdir': i['isdir']} for i in
+                     link_info['file_list']]
         if not file_list:
             raise ValueError('文件列表为空！')
         return {'shareid': shareid, 'user_id': user_id, 'file_list': file_list}
@@ -250,7 +251,8 @@ class PanTransfer:
                 if link_type == 'common':
                     sta, filename = self.transfer_common(link)
                     if sta:
-                        db.execute("UPDATE cj_data_by_hct SET file_name=%s, upload_status=1 WHERE id=%s", (filename, p_id))
+                        db.execute("UPDATE cj_data_by_hct SET file_name=%s, upload_status=1 WHERE id=%s",
+                                   (filename, p_id))
                         print('转存完成！')
                     else:
                         db.execute("DELETE FROM cj_data_by_hct WHERE id=%s", (p_id,))
@@ -299,15 +301,13 @@ def parse_url_and_code(url):
 # Example usage
 if __name__ == "__main__":
 
-    cookie = str(sys.argv[1])
     dir_name = sys.argv[2]
-    print('cookie:', cookie)
-    print('dir_name:', dir_name)
     with Database() as db:
         results = db.execute(
             "SELECT id, download_url, download_password FROM cj_data_by_hct WHERE cj_class IN ('C++语言', 'GO/语言', 'Java教程', 'NET教程', 'PHP教程', '前端教程', '区块链教程', '数据库教程', '易语言', '服务器教程', '汇编语言', '移动开发教程', '运维教程', '黑客教程') AND upload_status=0"
         )
-
+        cookie = db.execute("SELECT * FROM user_ck WHERE status = 1 limit 0,1")[0][1]
+    print(cookie)
     pan_transfer = PanTransfer(cookie, dir_name)
     for down in results:
         links = [f"{down[1]} {down[2]}"]
