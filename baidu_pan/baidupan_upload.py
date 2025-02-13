@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import pymysql
@@ -51,11 +50,11 @@ class BaidupanUpload:
         # 设置无头模式
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-dev-shm-usage")  # 解决资源限制问题
 
-        selenium_host = os.environ.get("SELENIUM_HOST", "localhost")
+        # 连接到 Selenium 服务
         self.browser = webdriver.Remote(
-            command_executor=f'http://{selenium_host}:4445/wd/hub',
+            command_executor='http://selenium:4445/wd/hub',
             options=chrome_options
         )
         self.db = Database()  # Initialize the database connection
