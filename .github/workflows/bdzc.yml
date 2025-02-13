@@ -23,5 +23,12 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run application
+      env:  # 设置环境变量
+        BAIDU_COOKIE: ${{ secrets.BAIDU_COOKIE }}   # 从 GitHub Secrets 中获取值
+        BAIDU_DIR_NAME: ${{ secrets.BAIDU_DIR_NAME }}
+        SQLIP: ${{ secrets.SQLIP }}
+        SQLUSER: ${{ secrets.SQLUSER }}
+        SQLPWD: ${{ secrets.SQLPWD }}
+        SQLDATABASE: ${{ secrets.SQLDATABASE }}
       run: |
-        python baidu_pan/pantransfer.py "$BAIDU_COOKICE" "$BAIDU_DIR_NAME" "$SQLIP" "$SQLUSER" "$SQLPWD" "$SQLDATABASE" 
+        python baidu_pan/pantransfer.py "$BAIDU_COOKIE" "$BAIDU_DIR_NAME" "$SQLIP" "$SQLUSER" "$SQLPWD" "$SQLDATABASE"
