@@ -301,7 +301,11 @@ if __name__ == "__main__":
 
     cookie = sys.argv[1]
     dir_name = sys.argv[2]
-
+    print(sys.argv[2])
+    print(sys.argv[3])
+    print(sys.argv[4])
+    print(sys.argv[5])
+    print(sys.argv[6])
     with Database() as db:
         results = db.execute(
             "SELECT id, download_url, download_password FROM cj_data_by_hct WHERE cj_class IN ('C++语言', 'GO/语言', 'Java教程', 'NET教程', 'PHP教程', '前端教程', '区块链教程', '数据库教程', '易语言', '服务器教程', '汇编语言', '移动开发教程', '运维教程', '黑客教程') AND upload_status=0"
