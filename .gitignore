@@ -2,4 +2,4 @@
 .venv/
 **.DS_Store
 __pycache__/
-/baidu_pan/baidupan_upload.py
+

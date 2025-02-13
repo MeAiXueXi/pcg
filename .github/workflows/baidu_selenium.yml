@@ -1,0 +1,38 @@
+name: Baidu Selenium
+
+on:
+  workflow_dispatch:  # 允许手动触发工作流
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome:latest
+        ports:
+          - 4444:4444
+        options: >-
+          --shm-size=2g
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run application
+      env:  # 设置环境变量
+        SQLIP: ${{ secrets.SQLIP }}
+        SQLUSER: ${{ secrets.SQLUSER }}
+        SQLPWD: ${{ secrets.SQLPWD }}
+        SQLDATABASE: ${{ secrets.SQLDATABASE }}
+      run: |
+        python baidu_pan/baidupan_upload.py  "$SQLIP" "$SQLUSER" "$SQLPWD" "$SQLDATABASE"
