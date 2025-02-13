@@ -28,6 +28,9 @@ jobs:
       run: |
         pip install -r requirements.txt
 
+    - name: Wait for Selenium to start
+      run: sleep 10
+
     - name: Run application
       env:  # 设置环境变量
         SQLIP: ${{ secrets.SQLIP }}
