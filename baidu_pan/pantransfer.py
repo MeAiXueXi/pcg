@@ -53,50 +53,61 @@ class Database:
             self.password = password
             self.database = database
             self.connection = None
+            print('数据库配置信息已初始化。', flush=True)
 
     def connect(self):
-        """Create a database connection."""
+        """创建数据库连接。"""
         if self.connection is None:
+            print('正在连接数据库...', flush=True)
             self.connection = pymysql.connect(
                 host=self.host,
                 user=self.user,
                 password=self.password,
                 database=self.database
             )
+            print('数据库连接成功！', flush=True)
 
     def close(self):
-        """Close the database connection."""
+        """关闭数据库连接。"""
         if self.connection:
+            print('正在关闭数据库连接...', flush=True)
             self.connection.close()
             self.connection = None
+            print('数据库连接已关闭。', flush=True)
 
     def execute(self, query, params=None):
-        """Execute a query against the database."""
+        """执行数据库查询。"""
+        print(f'正在执行查询: {query}', flush=True)
         self.connect()
         with self.connection.cursor() as cursor:
             cursor.execute(query, params)
             self.connection.commit()
-            return cursor.fetchall()
+            results = cursor.fetchall()
+            print('查询执行成功，结果已返回。', flush=True)
+            return results
 
     def execute_many(self, query, params):
-        """Execute a batch of queries against the database."""
+        """执行一批数据库查询。"""
+        print(f'正在执行批量查询: {query}', flush=True)
         self.connect()
         with self.connection.cursor() as cursor:
             cursor.executemany(query, params)
             self.connection.commit()
+            print('批量查询执行成功。', flush=True)
 
     def __enter__(self):
-        """Context manager entry."""
+        """上下文管理器入口。"""
         self.connect()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        """Context manager exit."""
+        """上下文管理器出口。"""
         self.close()
 
 
 class PanTransfer:
     def __init__(self, cookie, dir_name):
+        print('初始化PanTransfer类...', flush=True)
         self.headers = dict(HEADERS)
         self.headers['Cookie'] = cookie
         self.dir_name = dir_name
@@ -105,26 +116,36 @@ class PanTransfer:
         self.session = requests.Session()
         self.session.verify = False
         self.session.headers.update(self.headers)
+        print('请求头信息已设置。', flush=True)
         self.get_bdstoken()
         self.create_dir()
 
     @retry(stop_max_attempt_number=5, wait_fixed=1000)
     def post(self, url, post_data):
-        return self.session.post(url=url, data=post_data, timeout=self.timeout, allow_redirects=False, verify=False)
+        print(f'正在发送POST请求到: {url}', flush=True)
+        response = self.session.post(url=url, data=post_data, timeout=self.timeout, allow_redirects=False, verify=False)
+        print('POST请求已发送。', flush=True)
+        return response
 
     @retry(stop_max_attempt_number=5, wait_fixed=1000)
     def get(self, url):
-        return self.session.get(url=url, timeout=self.timeout, allow_redirects=True)
+        print(f'正在发送GET请求到: {url}', flush=True)
+        response = self.session.get(url=url, timeout=self.timeout, allow_redirects=True)
+        print('GET请求已发送。', flush=True)
+        return response
 
     def get_bdstoken(self):
+        print('正在获取bdstoken...', flush=True)
         response = self.get(BDSTOKEN_URL)
         bdstoken_list = re.findall('"bdstoken":"(.*?)"', response.text)
         if bdstoken_list:
             self.bdstoken = bdstoken_list[0]
+            print(f'bdstoken获取成功: {self.bdstoken}', flush=True)
         else:
             raise ValueError('获取bdstoken失败！')
 
     def transfer_files_repid(self, rapid_data):
+        print(f'正在进行快速转存文件，数据: {rapid_data}', flush=True)
         url = f"{TRANSFER_REPID_URL}?bdstoken={self.bdstoken}"
         post_data = {
             'path': f"{self.dir_name}/{rapid_data[3]}",
@@ -144,6 +165,7 @@ class PanTransfer:
             raise ValueError('转存失败！errno:' + str(data['errno']))
 
     def transfer_files(self, shareid, user_id, fs_id_list):
+        print(f'正在转存文件，shareid: {shareid}, user_id: {user_id}, fs_id_list: {fs_id_list}', flush=True)
         url = f"{TRANSFER_URL}?shareid={shareid}&from={user_id}&bdstoken={self.bdstoken}"
         if not self.dir_name.strip().startswith('/'):
             self.dir_name = '/' + self.dir_name.strip()
@@ -153,13 +175,14 @@ class PanTransfer:
         data = response.json()
         if data['errno'] == 0:
             for each in data['extra']['list']:
-                print('转存成功！保存位置:' + each['to'])
+                print('转存成功！保存位置:' + each['to'], flush=True)
                 return True
         else:
-            print('转存失败！errno:' + str(data['errno']))
+            print('转存失败！errno:' + str(data['errno']), flush=True)
             return False
 
     def get_dir_list(self):
+        print(f'正在获取目录列表，目录名: {self.dir_name}', flush=True)
         url = f"{GET_DIR_LIST_URL}&dir={self.dir_name}&bdstoken={self.bdstoken}"
         response = self.get(url)
         data = response.json()
@@ -167,11 +190,13 @@ class PanTransfer:
             dir_list_json = data['list']
             if not isinstance(dir_list_json, list):
                 raise ValueError('没获取到网盘目录列表,请检查cookie和网络后重试!')
+            print('目录列表获取成功。', flush=True)
             return dir_list_json
         else:
             raise ValueError('获取网盘目录列表失败! errno:' + str(data['errno']))
 
     def create_dir(self):
+        print(f'正在创建目录: {self.dir_name}', flush=True)
         if self.dir_name and self.dir_name != '/':
             dir_name_list = self.dir_name.split('/')
             dir_name = dir_name_list[-1]
@@ -185,11 +210,12 @@ class PanTransfer:
                 response = self.post(url, post_data)
                 data = response.json()
                 if data['errno'] == 0:
-                    print('创建目录成功！')
+                    print('创建目录成功！', flush=True)
                 else:
-                    print('创建目录失败！路径中不能包含以下任何字符: \\:*?"<>|')
+                    print('创建目录失败！路径中不能包含以下任何字符: \\:*?"<>|', flush=True)
 
     def verify_link(self, link_url, pass_code):
+        print(f'正在验证链接: {link_url}，提取码: {pass_code}', flush=True)
         sp = link_url.split('/')
         url = VERIFY_URL + '?surl=' + sp[-1][1:]
         post_data = {'pwd': pass_code, 'vcode': '', 'vcode_str': ''}
@@ -203,6 +229,7 @@ class PanTransfer:
             else:
                 cookie += f';BDCLND={bdclnd};'
             self.session.headers['Cookie'] = cookie
+            print('链接验证成功！', flush=True)
             return data
         elif data['errno'] == -9:
             raise ValueError('提取码错误！')
@@ -210,15 +237,18 @@ class PanTransfer:
             raise ValueError('验证链接失败！errno:' + str(data['errno']))
 
     def get_share_link_info(self, link_url, pass_code):
+        print(f'获取分享链接信息，链接: {link_url}, 提取码: {pass_code}', flush=True)
         self.verify_link(link_url, pass_code)
         random_sleep(start=1, end=3)
         response = self.get(link_url)
         info = re.findall(r'locals\.mset\((.*)\);', response.text)
         if not info:
             raise ValueError("获取分享信息失败！")
+        print('分享信息获取成功。', flush=True)
         return json.loads(info[0])
 
     def get_link_data(self, link_url, pass_code):
+        print(f'获取链接数据，链接: {link_url}, 提取码: {pass_code}', flush=True)
         link_info = self.get_share_link_info(link_url, pass_code)
         shareid = link_info['shareid']
         user_id = link_info['share_uk']
@@ -226,9 +256,11 @@ class PanTransfer:
                      link_info['file_list']]
         if not file_list:
             raise ValueError('文件列表为空！')
+        print('链接数据获取成功。', flush=True)
         return {'shareid': shareid, 'user_id': user_id, 'file_list': file_list}
 
     def transfer_common(self, link):
+        print(f'转存普通链接: {link}', flush=True)
         link_url, pass_code, unzip_code = parse_url_and_code(link)
         link_data = self.get_link_data(link_url, pass_code)
         shareid, user_id = link_data['shareid'], link_data['user_id']
@@ -238,38 +270,41 @@ class PanTransfer:
         return False, None
 
     def transfer_repid(self, link):
+        print(f'转存快速链接: {link}', flush=True)
         rapid_data = link.split('#', maxsplit=3)
         self.transfer_files_repid(rapid_data)
 
     def transfer(self, link_list, p_id):
+        print('开始转存链接列表...', flush=True)
         link_list = link_format(link_list)
         db = Database()
         for link in link_list:
             try:
-                print('正在转存:' + link)
+                print('正在转存: ' + link, flush=True)
                 link_type = check_link_type(link)
                 if link_type == 'common':
                     sta, filename = self.transfer_common(link)
                     if sta:
                         db.execute("UPDATE cj_data_by_hct SET file_name=%s, upload_status=1 WHERE id=%s",
                                    (filename, p_id))
-                        print('转存完成！')
+                        print('转存完成！', flush=True)
                     else:
                         db.execute("DELETE FROM cj_data_by_hct WHERE id=%s", (p_id,))
                     break
                 elif link_type == 'rapid':
                     # self.transfer_repid(link)
-                    print('不知道什么类型！')
+                    print('识别到快速链接，但未实现转存功能！', flush=True)
                     break
                 else:
                     raise ValueError('未知链接类型')
             except Exception as e:
-                print('Transfer Error --- ' + str(e))
+                print('转存错误 --- ' + str(e), flush=True)
                 db.execute("DELETE FROM cj_data_by_hct WHERE id=%s", (p_id,))
 
 
 def random_sleep(start=1, end=3):
     sleep_time = random.randint(start, end)
+    print(f'随机等待 {sleep_time} 秒...', flush=True)
     time.sleep(sleep_time)
 
 

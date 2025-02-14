@@ -31,4 +31,4 @@ jobs:
         SQLPWD: ${{ secrets.SQLPWD }}
         SQLDATABASE: ${{ secrets.SQLDATABASE }}
       run: |
-        python baidu_pan/pantransfer.py "$BAIDU_COOKIE" "$BAIDU_DIR_NAME" "$SQLIP" "$SQLUSER" "$SQLPWD" "$SQLDATABASE"
+        python -u baidu_pan/pantransfer.py "$BAIDU_COOKIE" "$BAIDU_DIR_NAME" "$SQLIP" "$SQLUSER" "$SQLPWD" "$SQLDATABASE"
