@@ -334,10 +334,10 @@ def parse_url_and_code(url):
 
 
 if __name__ == "__main__":
-    dir_name = sys.argv[2]
+    dir_name = '/游戏/'
     with Database() as db:
         results = db.execute(
-            "SELECT id, download_url, download_password FROM cj_data_by_hct WHERE cj_class IN ('app./源码', '企业/公司', '其它/源码', '办公/电脑', '商城/源码','推广/交流', '整站/源码', '电影/视频', '程序/源码','空间/建站', '精品/源码', '系统/程序', '素材/源码', '网站/源码','行业/源码', '装修/教育') AND upload_status=0"
+            "SELECT id, download_url, download_password FROM cj_data_by_hct WHERE cj_class ='游戏' AND upload_status=0"
         )
         cookie = db.execute("SELECT * FROM user_ck WHERE status = 1 and pan_name = 'baidu' limit 0,1")[0][1]
     pan_transfer = PanTransfer(cookie, dir_name)
